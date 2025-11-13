@@ -6,7 +6,7 @@ from typing import List
 import cv2
 import numpy as np
 
-# Classi del modello (ordine coerente con il training)
+# Class names (same order as training)
 CLASS_NAMES = [
     "train",
     "signal",
@@ -16,14 +16,14 @@ CLASS_NAMES = [
     "overhead support arm",
 ]
 
-# Colori BGR per ogni classe (diversi)
+# BGR colors for each class
 CLASS_COLORS = {
-    0: (255, 0, 0),      # train        -> blu
-    1: (0, 0, 255),      # signal       -> rosso
-    2: (255, 255, 0),    # railway switch -> giallo
-    3: (0, 255, 255),    # pole         -> ciano
+    0: (255, 0, 0),      # train        -> blue
+    1: (0, 0, 255),      # signal       -> red
+    2: (255, 255, 0),    # railway switch -> yellow
+    3: (0, 255, 255),    # pole         -> cyan
     4: (255, 0, 255),    # balise       -> magenta
-    5: (0, 255, 0),      # overhead support arm -> verde
+    5: (0, 255, 0),      # overhead support arm -> green
 }
 
 
@@ -33,13 +33,10 @@ def draw_detections(
     conf_threshold: float = 0.25,
 ) -> np.ndarray:
     """
-    Disegna i bounding box sul frame.
+    Draw bounding boxes on frame.
 
-    Si assume che `detections` sia un array Nx6:
+    detections: Nx6 array
         [x1, y1, x2, y2, score, class_id]
-
-    TODO:
-    - Se il tuo modello produce un formato diverso, adatta questa funzione.
     """
     h, w = frame.shape[:2]
 
@@ -63,13 +60,17 @@ def draw_detections(
         else:
             class_name = str(cls_id)
 
-        color = CLASS_COLORS.get(cls_id, (0, 255, 0))  # default verde
+        color = CLASS_COLORS.get(cls_id, (0, 255, 0))
         label = f"{class_name} {score:.2f}"
 
-        # Rettangolo e sfondo etichetta
+        # box
         cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+
+        # label background
         (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
         cv2.rectangle(frame, (x1, y1 - th - 4), (x1 + tw, y1), color, -1)
+
+        # label text
         cv2.putText(
             frame,
             label,
@@ -85,9 +86,7 @@ def draw_detections(
 
 
 class FPSCounter:
-    """
-    Semplice FPS counter per mostrare i frame per secondo.
-    """
+    """Simple FPS counter."""
 
     def __init__(self, avg_over: int = 30):
         self.avg_over = avg_over
