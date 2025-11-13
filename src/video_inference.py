@@ -106,3 +106,53 @@ def run_inference_colab_stream(
 
     cap.release()
     print("[INFO] Streaming finished.")
+
+def run_inference_to_file(
+    weights: str = "weights/best.pt",
+    source: str = "",
+    output_path: str = "outputs/output.mp4",
+    img_size: int = 640,
+    conf_thres: float = 0.25,
+    device: str = "cuda",
+):
+    """
+    Runs YOLO inference on a video and saves the annotated output to a file.
+    """
+
+    from ultralytics import YOLO
+
+    model = YOLO(weights)
+
+    cap = cv2.VideoCapture(source)
+    if not cap.isOpened():
+        raise RuntimeError(f"Unable to open video: {source}")
+
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+    w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    out = cv2.VideoWriter(output_path, fourcc, fps, (w, h))
+
+    fps_counter = FPSCounter()
+
+    print("[INFO] Starting offline inference (writing to file)...")
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        frame_bgr = frame
+
+        detections = yolo_infer_frame(model, frame_bgr, img_size, device)
+        drawn = draw_detections(frame_bgr.copy(), detections, conf_threshold=conf_thres)
+
+        fps = fps_counter.tick()
+        drawn = fps_counter.put_fps_on_frame(drawn, fps)
+
+        out.write(drawn)
+
+    cap.release()
+    out.release()
+    print(f"[INFO] Saved output video to: {output_path}")
