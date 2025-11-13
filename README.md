@@ -11,7 +11,10 @@ The chosen variant is the **nano (n)**, optimized to ensure maximum performance 
 
 You can test the model in real time using the interactive notebook on Google Colab:
 
-[![Open In Colab](https://colab.research.google.com/drive/19MjcgNOB86hKBzFeOwju5taLR7NOuCr8?usp=sharing)](LINK_TO_YOUR_COLAB)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](
+https://colab.research.google.com/github/Simone2408/yolov12n-thermal-video-detector/blob/main/notebooks/yolov12n_thermal_demo.ipynb
+)
+
 
 Within the notebook you can:
 - Automatically load the model
