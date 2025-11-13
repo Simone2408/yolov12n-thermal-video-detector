@@ -1,7 +1,7 @@
 # YOLOv12n Thermal Video Detector
 
 This repository contains a **YOLOv12n** model fine-tuned for **object detection in railway thermal videos**.  
-The model has been trained to recognize railway infrastructure elements in thermal conditions (LWIR/MWIR), with a focus on speed and real-time inference.
+The model has been trained to recognize railway infrastructure elements in thermal conditions.
 
 The chosen variant is the **nano (n)**, optimized to ensure maximum performance even on lightweight GPUs, such as those available on Google Colab.
 
@@ -20,7 +20,7 @@ Within the notebook you can:
 - Automatically load the model
 - Upload your own thermal video
 - Run inference with GPU acceleration
-- View the result directly in your browser
+- View the output result 
 
 ---
 
@@ -59,7 +59,7 @@ yolov12n-thermal-video-detector/
 │   └── yolov12n_thermal_demo.ipynb
 │
 ├── images/
-│   ├── training_curve.png
+│   ├── loss.png
 │   ├── example_thermal1.jpg
 │   └── example_thermal2.jpg
 │
@@ -75,18 +75,43 @@ yolov12n-thermal-video-detector/
 > ⚠️ Real-time inference on CPU may not be smooth.  
 > For the best experience, use the Colab demo.
 
-```bash
-git clone https://github.com/Simone2408/yolov12n-thermal-video-detector.git
-```
-```bash
-cd yolov12n-thermal-video-detector
-```
-```bash
-pip install -r requirements.txt
-```
+### 🔒 (Recommended) Create and Activate a Virtual Environment
 
 ---
 
+It's highly recommended to use a virtual environment to isolate project dependencies.
+
+#### 1. Create the Environment
+
+```bash
+python3 -m venv venv
+```
+2. Activate the Environment
+macOS / Linux
+
+```bash
+
+source venv/bin/activate
+```
+Windows
+
+```bash
+
+venv\Scripts\activate
+```
+3. Clone Repository and Install Dependencies
+```bash
+
+git clone https://github.com/Simone2408/yolov12n-thermal-video-detector.git
+```
+```bash
+
+cd yolov12n-thermal-video-detector
+```
+```bash
+
+pip install -r requirements.txt
+```
 ## 🔹 Download the Weights
 
 Download the `best.pt` file from:
