@@ -52,27 +52,20 @@ yolov12n-thermal-video-detector/
 │
 ├── src/
 │   ├── video_inference.py
-│   ├── thermal_preprocess.py
 │   ├── utils.py
-│   ├── model_loader.py
 │   └── __init__.py
 │
 ├── notebooks/
-│   └── thermal_video_colab.ipynb
+│   └── yolov12n_thermal_demo.ipynb
 │
 ├── images/
 │   ├── training_curve.png
-│   ├── example_thermal1.png
-│   └── example_thermal2.png
-│
-├── datasets/
-│   └── dataset_info.md
+│   ├── example_thermal1.jpg
+│   └── example_thermal2.jpg
 │
 ├── outputs/
 │   └── .gitkeep
-│
-└── scripts/
-    └── download_weights.py
+
 ```
 
 ---
@@ -84,7 +77,11 @@ yolov12n-thermal-video-detector/
 
 ```bash
 git clone https://github.com/Simone2408/yolov12n-thermal-video-detector.git
+```
+```bash
 cd yolov12n-thermal-video-detector
+```
+```bash
 pip install -r requirements.txt
 ```
 
@@ -100,23 +97,99 @@ Download the `best.pt` file from:
 
 
 
-## 📊 Model Results
 
-| Metric        | Value |
-|---------------|-------|
-| mAP50         | 0.XX  |
-| mAP50-95      | 0.XX  |
-| Precision     | 0.XX  |
-| Recall        | 0.XX  |
-| FPS (Colab T4)| XX    |
+## 📊 Model Results & Training Analysis
+
+All metrics are computed on the validation set at the final epoch (80).
+
+### **📌 Summary Metrics**
+
+| Metric            | Value   |
+|-------------------|---------|
+| **mAP@0.5**       | **0.905** |
+| **mAP@0.5:0.95**  | **0.552** |
+| **Precision**     | **0.898** |
+| **Recall**        | **0.840** |
 
 ---
 
 ## 📉 Training Progress
 
-![Training Curve](images/training_curve.png)
+<p align="center">
+  <img src="images/loss.png" alt="Loss Curve" width="550">
+</p>
+
+This plot shows how both **training loss** and **validation loss** evolve during training.
+
+### **🔎 Axis Meaning**
+- **X-axis — Epochs:**  
+  One value per training epoch.
+
+- **Y-axis — Loss value:**  
+  Lower values indicate that the model is learning effectively.
+
+A stable downward trend indicates healthy convergence.
 
 ---
+
+## 📈 Detailed Evaluation Curves
+
+These curves help visualize the model’s behavior under different confidence thresholds.
+
+### **🔵 Recall–Confidence Curve**
+<p align="center">
+  <img src="images/R_curve.png" alt="Recall Confidence Curve" width="550">
+</p>
+
+Shows how recall decreases as confidence increases.
+
+---
+
+### **🟢 Precision–Recall Curve**
+<p align="center">
+  <img src="images/PR_curve.png" alt="Precision Recall Curve" width="550">
+</p>
+
+Displays the tradeoff between precision and recall for each class.
+
+---
+
+### **🟡 Precision–Confidence Curve**
+<p align="center">
+  <img src="images/P_curve.png" alt="Precision Confidence Curve" width="550">
+</p>
+
+Illustrates how precision varies with different confidence thresholds.
+
+---
+
+### **🟣 F1–Confidence Curve**
+<p align="center">
+  <img src="images/F1_curve.png" alt="F1 Confidence Curve" width="550">
+</p>
+
+Shows the harmonic mean of precision and recall across confidence values.
+
+---
+
+## 🧩 Confusion Matrices
+
+### **Confusion Matrix (Absolute Values)**
+<p align="center">
+  <img src="images/confusion_matrix.png" alt="Confusion Matrix" width="650">
+</p>
+
+---
+
+### **Confusion Matrix (Normalized)**
+<p align="center">
+  <img src="images/confusion_matrix_normalized.png" alt="Confusion Matrix Normalized" width="650">
+</p>
+
+Normalized values (0–1) allow direct comparison between classes.
+
+---
+
 
 ## 🔥 Thermal Inference Examples
 
