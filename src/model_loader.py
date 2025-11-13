@@ -6,20 +6,22 @@ from pathlib import Path
 
 def load_model(weights_path: str = "weights/best.pt", device: str = "cuda"):
     """
-    Carica il modello YOLOv12n da un file di pesi.
+    Load YOLOv12n model from a .pt checkpoint.
+    
     """
 
     weights_path = Path(weights_path)
     if not weights_path.exists():
         raise FileNotFoundError(f"Pesi non trovati: {weights_path}")
 
-    checkpoint = torch.load(weights_path, map_location=device)
+    # IMPORTANT: weights_only=False for Ultralytics model checkpoints
+    checkpoint = torch.load(weights_path, map_location=device, weights_only=False)
 
-    # Caso 1: hai salvato direttamente il modello (torch.save(model, ...))
+    # Case 1: you saved the whole model directly (torch.save(model, "best.pt"))
     if not isinstance(checkpoint, dict):
         model = checkpoint
     else:
-        # Caso 2: hai salvato un dict con dentro il modello
+        # Case 2: Ultralytics-style dict with 'model' key
         if "model" in checkpoint:
             model = checkpoint["model"]
         else:
