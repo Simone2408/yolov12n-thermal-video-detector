@@ -83,7 +83,7 @@ yolov12n-thermal-video-detector/
 > For the best experience, use the Colab demo.
 
 ```bash
-git clone https://github.com/.../yolov12n-thermal-video-detector.git
+git clone https://github.com/Simone2408/yolov12n-thermal-video-detector.git
 cd yolov12n-thermal-video-detector
 pip install -r requirements.txt
 ```
