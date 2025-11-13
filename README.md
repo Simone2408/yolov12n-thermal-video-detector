@@ -44,7 +44,7 @@ yolov12n-thermal-video-detector/
 ├── .gitignore
 │
 ├── weights/
-│   └── best.pt
+│   └── best.pt 
 │
 ├── src/
 │   ├── video_inference.py
@@ -59,9 +59,7 @@ yolov12n-thermal-video-detector/
 ├── images/
 │   ├── training_curve.png
 │   ├── example_thermal1.png
-│   ├── example_thermal2.png
-│   ├── raw_vs_processed.png
-│   └── palette_example.png
+│   └── example_thermal2.png
 │
 ├── datasets/
 │   └── dataset_info.md
@@ -96,16 +94,7 @@ Download the `best.pt` file from:
 
 ---
 
-## ▶️ Running Inference
 
-```bash
-python src/video_inference.py \
-    --weights weights/best.pt \
-    --source path/to/video.mp4 \
-    --output outputs/result.mp4
-```
-
----
 
 ## 📊 Model Results
 
