@@ -11,7 +11,7 @@ The chosen variant is the **nano (n)**, optimized to ensure maximum performance 
 
 You can test the model in real time using the interactive notebook on Google Colab:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](LINK_TO_YOUR_COLAB)
+[![Open In Colab](https://colab.research.google.com/drive/19MjcgNOB86hKBzFeOwju5taLR7NOuCr8?usp=sharing)](LINK_TO_YOUR_COLAB)
 
 Within the notebook you can:
 - Automatically load the model
@@ -31,6 +31,7 @@ The YOLOv12n model is trained to recognize the following thermal classes related
 - **pole**
 - **balise**
 - **overhead support arm**
+
 
 ---
 
