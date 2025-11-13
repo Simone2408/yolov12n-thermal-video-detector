@@ -96,3 +96,16 @@ def preprocess_for_model(
 
     tensor = torch.from_numpy(img).to(device)
     return tensor
+
+def preprocess_frame_for_yolo(frame: np.ndarray, mode: str = "inferno") -> np.ndarray:
+    """
+    Prepare a thermal frame for YOLO:
+    - normalize
+    - histogram equalization
+    - apply colormap (default: inferno)
+    Returns a BGR uint8 image, same size as input.
+    """
+    gray = normalize_thermal_frame(frame)
+    gray = apply_hist_equalization(gray)
+    colored = apply_colormap(gray, mode=mode)
+    return colored

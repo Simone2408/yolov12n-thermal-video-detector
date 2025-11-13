@@ -4,107 +4,94 @@ import argparse
 from pathlib import Path
 
 import cv2
-import torch
+import numpy as np
 
 from .model_loader import load_model
-from .thermal_preprocess import preprocess_for_model
+from .thermal_preprocess import preprocess_frame_for_yolo
 from .utils import draw_detections, FPSCounter
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="YOLOv12n Thermal Video Inference")
+    parser = argparse.ArgumentParser(description="YOLOv12n Thermal Video Inference (Ultralytics)")
     parser.add_argument(
         "--weights",
         type=str,
         default="weights/best.pt",
-        help="Percorso ai pesi del modello",
+        help="Path to model weights",
     )
     parser.add_argument(
         "--source",
         type=str,
         required=True,
-        help="Percorso al video sorgente (termico)",
+        help="Path to input thermal video",
     )
     parser.add_argument(
         "--output",
         type=str,
         default="outputs/result.mp4",
-        help="Percorso di salvataggio del video di output",
+        help="Path to save output video (offline mode)",
     )
     parser.add_argument(
         "--img-size",
         type=int,
         default=640,
-        help="Dimensione di input del modello (lato)",
+        help="YOLO inference image size",
     )
     parser.add_argument(
         "--conf-thres",
         type=float,
         default=0.25,
-        help="Soglia di confidenza per visualizzare le predizioni",
+        help="Confidence threshold",
     )
     parser.add_argument(
         "--device",
         type=str,
         default="cuda",
-        help="Dispositivo: cuda o cpu",
+        help="Device: 'cuda' or 'cpu'",
     )
     parser.add_argument(
         "--mode",
         type=str,
         default="file",
         choices=["file", "colab_stream"],
-        help="Modalità: 'file' per salvare video, 'colab_stream' per streaming in Colab",
+        help="Inference mode: 'file' (save video) or 'colab_stream' (real-time in Colab)",
     )
     return parser.parse_args()
 
 
-def postprocess_predictions(preds, img_size, width, height):
+def yolo_infer_frame(model, frame_bgr: np.ndarray, img_size: int, device: str):
     """
-    Adatta le predizioni dal sistema di coordinate del modello (img_size x img_size)
-    alla risoluzione originale del frame (width x height).
+    Run a single YOLO inference on a BGR frame using Ultralytics API.
 
-    Si assume che preds sia un array Nx6:
-        [x1, y1, x2, y2, score, class_id]
+    Returns:
+        detections: Nx6 array [x1, y1, x2, y2, conf, cls]
+        frame_bgr: the same processed frame (for drawing)
     """
-    if preds is None:
-        return None
+    # Ultralytics YOLO accepts numpy BGR images directly
+    results = model(
+        frame_bgr,
+        imgsz=img_size,
+        device=device,
+        verbose=False,
+    )
 
-    if isinstance(preds, torch.Tensor):
-        preds = preds.detach().cpu().numpy()
+    # results is usually a list-like, take first element
+    if isinstance(results, (list, tuple)):
+        results = results[0]
 
-    if len(preds) == 0:
-        return preds
+    detections = None
+    if results and results.boxes is not None and len(results.boxes) > 0:
+        boxes = results.boxes
+        xyxy = boxes.xyxy.cpu().numpy()  # (N, 4)
+        conf = boxes.conf.cpu().numpy()  # (N,)
+        cls = boxes.cls.cpu().numpy()    # (N,)
 
-    preds = preds.copy()
-    scale_x = width / float(img_size)
-    scale_y = height / float(img_size)
+        detections = np.concatenate(
+            [xyxy, conf[:, None], cls[:, None]],
+            axis=1
+        )
 
-    preds[:, 0] *= scale_x
-    preds[:, 2] *= scale_x
-    preds[:, 1] *= scale_y
-    preds[:, 3] *= scale_y
-
-    return preds
-
-
-def _infer_frame(model, frame, img_size, device):
-    """
-    Un singolo passo di inferenza su un frame:
-    - preprocess termico
-    - forward del modello
-    - ritorna le predizioni grezze
-    """
-    tensor = preprocess_for_model(frame, img_size=img_size, device=device)
-
-    with torch.no_grad():
-        raw_preds = model(tensor)
-
-        # Se il tuo modello restituisce più output, prendi quello giusto
-        if isinstance(raw_preds, (list, tuple)):
-            raw_preds = raw_preds[0]
-
-    return raw_preds
+    return detections, frame_bgr
 
 
 def run_inference_to_file(
@@ -116,24 +103,21 @@ def run_inference_to_file(
     device: str = "cuda",
 ):
     """
-    Modalità "classica": legge un video, fa inferenza frame-by-frame,
-    salva il risultato in un nuovo MP4 con bounding box e FPS.
+    Offline mode:
+    - read video from file
+    - run YOLO on each frame
+    - save annotated video to disk
     """
-    # Device check
-    if device == "cuda" and not torch.cuda.is_available():
-        print("[WARN] CUDA non disponibile, uso CPU.")
-        device = "cpu"
-
-    print(f"[INFO] Caricamento modello da {weights} su device: {device}")
-    model = load_model(weights, device=device)
+    print("[INFO] Loading YOLO model...")
+    model = load_model(weights)
 
     source_path = Path(source)
     if not source_path.exists():
-        raise FileNotFoundError(f"Video sorgente non trovato: {source_path}")
+        raise FileNotFoundError(f"Source video not found: {source_path}")
 
     cap = cv2.VideoCapture(str(source_path))
     if not cap.isOpened():
-        raise RuntimeError(f"Impossibile aprire il video: {source_path}")
+        raise RuntimeError(f"Unable to open video: {source_path}")
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     fps_src = cap.get(cv2.CAP_PROP_FPS) or 25.0
@@ -145,25 +129,26 @@ def run_inference_to_file(
 
     fps_counter = FPSCounter()
 
-    print("[INFO] Inizio inferenza video (salvataggio su file)...")
+    print("[INFO] Starting offline inference...")
     while True:
         ret, frame = cap.read()
         if not ret:
             break
 
-        raw_preds = _infer_frame(model, frame, img_size, device)
-        preds_scaled = postprocess_predictions(raw_preds, img_size, width, height)
+        # Thermal preprocessing -> BGR frame for YOLO
+        proc_frame = preprocess_frame_for_yolo(frame)
 
-        frame_drawn = draw_detections(frame.copy(), preds_scaled, conf_threshold=conf_thres)
+        detections, proc_frame = yolo_infer_frame(model, proc_frame, img_size, device)
 
+        drawn = draw_detections(proc_frame.copy(), detections, conf_threshold=conf_thres)
         fps = fps_counter.tick()
-        frame_drawn = fps_counter.put_fps_on_frame(frame_drawn, fps)
+        drawn = fps_counter.put_fps_on_frame(drawn, fps)
 
-        out.write(frame_drawn)
+        out.write(drawn)
 
     cap.release()
     out.release()
-    print(f"[INFO] Inferenza completata. Video salvato in: {output}")
+    print(f"[INFO] Offline inference complete. Saved to: {output}")
 
 
 def run_inference_colab_stream(
@@ -174,67 +159,58 @@ def run_inference_colab_stream(
     device: str = "cuda",
 ):
     """
-    Modalità pensata per Google Colab:
-    - mostra il video direttamente nella cella
-    - aggiorna il frame ad ogni iterazione
-    - effetto “quasi real time” mentre il modello annota
-
-    Nota: in Colab l'aggiornamento non sarà perfetto come una GUI locale,
-    ma l'esperienza è molto più "live" rispetto a salvare e poi aprire il video.
+    Colab streaming mode:
+    - read thermal video
+    - preprocess each frame
+    - run YOLO
+    - display annotated frame in the cell (quasi real-time)
     """
-    # Import specifici per Colab
+    # Imports specific to Colab
     try:
         from google.colab.patches import cv2_imshow
         from IPython.display import clear_output
     except ImportError:
         raise ImportError(
-            "run_inference_colab_stream è pensato per Google Colab. "
-            "Assicurati di eseguirlo in un notebook Colab."
+            "run_inference_colab_stream is intended to be used inside Google Colab."
         )
 
-    if device == "cuda" and not torch.cuda.is_available():
-        print("[WARN] CUDA non disponibile, uso CPU.")
-        device = "cpu"
-
-    print(f"[INFO] Caricamento modello da {weights} su device: {device}")
-    model = load_model(weights, device=device)
+    print("[INFO] Loading YOLO model...")
+    model = load_model(weights)
 
     source_path = Path(source)
     if not source_path.exists():
-        raise FileNotFoundError(f"Video sorgente non trovato: {source_path}")
+        raise FileNotFoundError(f"Source video not found: {source_path}")
 
     cap = cv2.VideoCapture(str(source_path))
     if not cap.isOpened():
-        raise RuntimeError(f"Impossibile aprire il video: {source_path}")
-
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        raise RuntimeError(f"Unable to open video: {source_path}")
 
     fps_counter = FPSCounter()
 
-    print("[INFO] Inizio inferenza video in streaming su Colab...")
+    print("[INFO] Starting real-time streaming in Colab...")
     frame_idx = 0
     while True:
         ret, frame = cap.read()
         if not ret:
             break
 
-        raw_preds = _infer_frame(model, frame, img_size, device)
-        preds_scaled = postprocess_predictions(raw_preds, img_size, width, height)
+        # Thermal preprocessing -> BGR for YOLO and display
+        proc_frame = preprocess_frame_for_yolo(frame)
 
-        frame_drawn = draw_detections(frame.copy(), preds_scaled, conf_threshold=conf_thres)
+        detections, proc_frame = yolo_infer_frame(model, proc_frame, img_size, device)
 
+        drawn = draw_detections(proc_frame.copy(), detections, conf_threshold=conf_thres)
         fps = fps_counter.tick()
-        frame_drawn = fps_counter.put_fps_on_frame(frame_drawn, fps)
+        drawn = fps_counter.put_fps_on_frame(drawn, fps)
 
-        # Mostra il frame nella cella, aggiornando
+        # Show in cell (overwrite previous frame)
         clear_output(wait=True)
-        cv2_imshow(frame_drawn)
+        cv2_imshow(drawn)
         frame_idx += 1
 
     cap.release()
-    print("[INFO] Streaming terminato.")
-    
+    print("[INFO] Streaming finished.")
+
 
 if __name__ == "__main__":
     args = parse_args()
@@ -248,8 +224,6 @@ if __name__ == "__main__":
             device=args.device,
         )
     else:
-        # Modalità streaming Colab da terminale ha poco senso,
-        # ma lasciamo la possibilità.
         run_inference_colab_stream(
             weights=args.weights,
             source=args.source,

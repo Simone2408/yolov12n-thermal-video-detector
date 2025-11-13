@@ -1,51 +1,21 @@
 # src/model_loader.py
 
 from pathlib import Path
-
-import torch
-from torch.serialization import add_safe_globals
-from ultralytics.nn.tasks import DetectionModel
+from ultralytics import YOLO
 
 
-# ✅ Allow Ultralytics DetectionModel to be loaded safely by torch.load
-add_safe_globals([DetectionModel])
-
-
-def load_model(weights_path: str = "weights/best.pt", device: str = "cuda"):
+def load_model(weights_path: str = "weights/best.pt"):
     """
-    Load YOLOv12n model from a .pt checkpoint (Ultralytics-style).
+    Load a YOLO model using Ultralytics API.
 
-    - The checkpoint was saved from an Ultralytics YOLO model (DetectionModel).
-    - In PyTorch 2.6, torch.load() uses a "safe" unpickler by default (weights_only=True),
-      which blocks unknown Python classes unless they are explicitly allowlisted.
-    - Here we use `add_safe_globals([DetectionModel])` so that torch.load can
-      deserialize Ultralytics' DetectionModel safely.
-
-    Only do this if you trust the source of the checkpoint (in this case: yourself).
+    This avoids dealing with torch.load and PyTorch safe unpickling,
+    and lets Ultralytics handle the internal DetectionModel logic.
     """
 
     weights_path = Path(weights_path)
     if not weights_path.exists():
         raise FileNotFoundError(f"Pesi non trovati: {weights_path}")
 
-    # 👇 Now safe unpickling knows DetectionModel is allowed
-    checkpoint = torch.load(weights_path, map_location=device)
-
-    # Case 1: you saved the full model directly: torch.save(model, "best.pt")
-    if not isinstance(checkpoint, dict):
-        model = checkpoint
-    else:
-        # Case 2: Ultralytics-style checkpoint with 'model' key
-        if "model" in checkpoint:
-            model = checkpoint["model"]
-        else:
-            raise KeyError(
-                "Impossibile trovare la chiave 'model' nel checkpoint. "
-                "Adatta load_model() al formato del tuo file di pesi."
-            )
-
-    model.to(device)
-    model.eval()
-
-    print(f"[INFO] Modello caricato da {weights_path} su device: {device}")
+    model = YOLO(str(weights_path))
+    print(f"[INFO] YOLO model loaded from {weights_path}")
     return model
