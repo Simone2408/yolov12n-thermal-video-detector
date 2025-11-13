@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+
+# Model weights
+weights/*.pt
+weights/*.onnx
+
+# Outputs
+outputs/*
+
+# Colab artifacts
+*.ipynb_checkpoints/
+
+# Large files
+*.mp4
+*.avi
+*.mkv
+
+# Virtual environments
+env/
+venv/
+
+# System
+.DS_Store
