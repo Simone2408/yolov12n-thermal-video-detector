@@ -127,8 +127,10 @@ python src/video_inference.py \
 
 ## 🔥 Thermal Inference Examples
 
-![Example 1](images/example_thermal1.png)
-![Example 2](images/example_thermal2.png)
+<p align="center">
+  <img src="images/example_thermal1.jpg" alt="Example 1" width="300"/>
+  <img src="images/example_thermal2.jpg" alt="Example 2" width="300"/>
+</p>
 
 ---
 
