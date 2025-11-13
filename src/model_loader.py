@@ -1,18 +1,25 @@
 # src/model_loader.py
 
 from pathlib import Path
+
 import torch
+from torch.serialization import add_safe_globals
+from ultralytics.nn.tasks import DetectionModel
+
+
+# ✅ Allow Ultralytics DetectionModel to be loaded safely by torch.load
+add_safe_globals([DetectionModel])
 
 
 def load_model(weights_path: str = "weights/best.pt", device: str = "cuda"):
     """
-    Load YOLOv12n model from a .pt checkpoint.
+    Load YOLOv12n model from a .pt checkpoint (Ultralytics-style).
 
-    IMPORTANT:
-    - This checkpoint was saved from an Ultralytics YOLO model (DetectionModel).
-    - In PyTorch 2.6, torch.load() uses `weights_only=True` by default.
-    - Here we explicitly set `weights_only=False` because we want to load
-      the full model object, not only raw weights.
+    - The checkpoint was saved from an Ultralytics YOLO model (DetectionModel).
+    - In PyTorch 2.6, torch.load() uses a "safe" unpickler by default (weights_only=True),
+      which blocks unknown Python classes unless they are explicitly allowlisted.
+    - Here we use `add_safe_globals([DetectionModel])` so that torch.load can
+      deserialize Ultralytics' DetectionModel safely.
 
     Only do this if you trust the source of the checkpoint (in this case: yourself).
     """
@@ -21,12 +28,8 @@ def load_model(weights_path: str = "weights/best.pt", device: str = "cuda"):
     if not weights_path.exists():
         raise FileNotFoundError(f"Pesi non trovati: {weights_path}")
 
-    # 🔴 KEY POINT: explicitly disable weights_only safety restriction
-    checkpoint = torch.load(
-        weights_path,
-        map_location=device,
-        weights_only=False,  # <--- this is the fix
-    )
+    # 👇 Now safe unpickling knows DetectionModel is allowed
+    checkpoint = torch.load(weights_path, map_location=device)
 
     # Case 1: you saved the full model directly: torch.save(model, "best.pt")
     if not isinstance(checkpoint, dict):
