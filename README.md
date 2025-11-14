@@ -1,40 +1,50 @@
 # YOLOv12n Thermal Video Detector
 
-This repository contains a **YOLOv12n** model fine-tuned for **object detection in railway thermal videos**.  
-The model has been trained to recognize railway infrastructure elements in thermal conditions.
-
-The chosen variant is the **nano (n)**, optimized to ensure maximum performance even on lightweight GPUs, such as those available on Google Colab.
+This repository contains a **YOLOv12n** model fine-tuned for **object detection in railway thermal videos**. The model is optimized to recognize key railway infrastructure elements under thermal conditions and is designed to run efficiently even on lightweight GPUs such as Google Colab.
 
 ---
 
-## 🚀 Try It Now (with GPU)
+## 🚀 Try It on Google Colab (with GPU)
 
-You can test the model in real time using the interactive notebook on Google Colab:
+You can test the model in real time using the interactive Colab notebook:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](
-https://colab.research.google.com/github/Simone2408/yolov12n-thermal-video-detector/blob/main/notebooks/yolov12n_thermal_demo.ipynb
-)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Simone2408/yolov12n-thermal-video-detector/blob/main/notebooks/yolov12n_thermal_demo.ipynb)
 
+Inside the notebook you can:
 
-Within the notebook you can:
-- Automatically load the model
-- Upload your own thermal video
-- Run inference with GPU acceleration
-- View the output result 
+* Automatically load the model
+* Upload your own thermal video
+* Run GPU-accelerated inference
+* Visualize the output
 
 ---
 
-## 🧠 Classes Detected by the Model
+## 🧠 Detected Classes
 
-The YOLOv12n model is trained to recognize the following thermal classes related to the railway domain:
+The YOLOv12n model is trained to recognize the following railway-related thermal classes:
 
-- **train**
-- **signal**
-- **railway switch**
-- **pole**
-- **balise**
-- **overhead support arm**
+* **train**
+* **signal**
+* **railway switch**
+* **pole**
+* **balise**
+* **overhead support arm**
 
+---
+
+## 📁 Dataset
+
+The model was trained on a non-public thermal railway dataset containing annotated samples for the six classes listed above.
+
+The dataset was split using a **70/20/10 ratio**:
+
+| Split          | Percentage | Purpose                                |
+| -------------- | ---------- | -------------------------------------- |
+| **Train**      | 70%        | Model training                         |
+| **Validation** | 20%        | Hyperparameter tuning  |
+| **Test**       | 10%        | Final evaluation & official metrics    |
+
+Annotations follow the **YOLO format** with normalized bounding boxes.
 
 ---
 
@@ -48,7 +58,7 @@ yolov12n-thermal-video-detector/
 ├── .gitignore
 │
 ├── weights/
-│   └── best.pt 
+│   └── best.pt
 │
 ├── src/
 │   ├── video_inference.py
@@ -65,179 +75,138 @@ yolov12n-thermal-video-detector/
 │
 ├── outputs/
 │   └── .gitkeep
-
 ```
 
 ---
 
 ## 🧩 Local Installation
 
-> ⚠️ Real-time inference on CPU may not be smooth.  
-> For the best experience, use the Colab demo.
+> ⚠️ Real-time inference on CPU may be slow. GPU execution is recommended.
 
-### 🔒 (Recommended) Create and Activate a Virtual Environment
+### 1. Create a Virtual Environment
 
----
-
-It's highly recommended to use a virtual environment to isolate project dependencies.
-
-#### 1. Create the Environment
+macOS / Linux:
 
 ```bash
 python3 -m venv venv
-```
-2. Activate the Environment
-macOS / Linux
-
-```bash
-
 source venv/bin/activate
 ```
-Windows
+
+Windows:
 
 ```bash
-
+python -m venv venv
 venv\Scripts\activate
 ```
-3. Clone Repository and Install Dependencies
-```bash
 
+### 2. Clone the Repository and Install Dependencies
+
+```bash
 git clone https://github.com/Simone2408/yolov12n-thermal-video-detector.git
-```
-```bash
-
 cd yolov12n-thermal-video-detector
-```
-```bash
-
 pip install -r requirements.txt
 ```
-## 🔹 Download the Weights
 
-Download the `best.pt` file from:
+### 3. Download the Weights
 
-➡️ [Download weights](https://drive.google.com/uc?export=download&id=1V6x8ROG5AGGCQ5PUdtZkr4UnbfXqBrZb)
+Download the `best.pt` file:
+
+[![Download Weights](https://img.shields.io/badge/Download-best.pt-blue?style=for-the-badge)](https://drive.google.com/uc?export=download&id=1V6x8ROG5AGGCQ5PUdtZkr4UnbfXqBrZb)
 
 ---
 
+## 📊 Model Performance
 
+Metrics computed on the **test set** at epoch 80:
 
-
-## 📊 Model Results & Training Analysis
-
-All metrics are computed on the validation set at the final epoch (80).
-
-### **📌 Summary Metrics**
-
-| Metric            | Value   |
-|-------------------|---------|
-| **mAP@0.5**       | **0.905** |
-| **mAP@0.5:0.95**  | **0.552** |
-| **Precision**     | **0.898** |
-| **Recall**        | **0.840** |
+| Metric           | Value     |
+| ---------------- | --------- |
+| **mAP@0.5**      | **0.905** |
+| **mAP@0.5:0.95** | **0.552** |
+| **Precision**    | **0.898** |
+| **Recall**       | **0.840** |
 
 ---
 
 ## 📉 Training Progress
 
-<p align="center">
-  <img src="images/loss.png" alt="Loss Curve" width="550">
-</p>
+![Loss Curve](images/loss.png)
 
-This plot shows how both **training loss** and **validation loss** evolve during training.
-
-### **🔎 Axis Meaning**
-- **X-axis — Epochs:**  
-  One value per training epoch.
-
-- **Y-axis — Loss value:**  
-  Lower values indicate that the model is learning effectively.
-
-A stable downward trend indicates healthy convergence.
+This plot shows the evolution of both training and validation loss.
 
 ---
 
-## 📈 Detailed Evaluation Curves
+## 📈 Evaluation Curves
 
-These curves help visualize the model’s behavior under different confidence thresholds.
+### Recall–Confidence
 
-### **🔵 Recall–Confidence Curve**
-<p align="center">
-  <img src="images/R_curve.png" alt="Recall Confidence Curve" width="550">
-</p>
+![R Curve](images/R_curve.png)
 
-Shows how recall decreases as confidence increases.
+### Precision–Recall
 
----
+![PR Curve](images/PR_curve.png)
 
-### **🟢 Precision–Recall Curve**
-<p align="center">
-  <img src="images/PR_curve.png" alt="Precision Recall Curve" width="550">
-</p>
+### Precision–Confidence
 
-Displays the tradeoff between precision and recall for each class.
+![P Curve](images/P_curve.png)
 
----
+### F1–Confidence
 
-### **🟡 Precision–Confidence Curve**
-<p align="center">
-  <img src="images/P_curve.png" alt="Precision Confidence Curve" width="550">
-</p>
-
-Illustrates how precision varies with different confidence thresholds.
-
----
-
-### **🟣 F1–Confidence Curve**
-<p align="center">
-  <img src="images/F1_curve.png" alt="F1 Confidence Curve" width="550">
-</p>
-
-Shows the harmonic mean of precision and recall across confidence values.
+![F1 Curve](images/F1_curve.png)
 
 ---
 
 ## 🧩 Confusion Matrices
 
-### **Confusion Matrix (Absolute Values)**
-<p align="center">
-  <img src="images/confusion_matrix.png" alt="Confusion Matrix" width="650">
-</p>
+### Absolute
+
+![Confusion Matrix](images/confusion_matrix.png)
+
+### Normalized
+
+![Confusion Matrix Normalized](images/confusion_matrix_normalized.png)
 
 ---
-
-### **Confusion Matrix (Normalized)**
-<p align="center">
-  <img src="images/confusion_matrix_normalized.png" alt="Confusion Matrix Normalized" width="650">
-</p>
-
-Normalized values (0–1) allow direct comparison between classes.
-
----
-
 
 ## 🔥 Thermal Inference Examples
 
-<p align="center">
-  <img src="images/example_thermal1.jpg" alt="Example 1" width="300"/>
-  <img src="images/example_thermal2.jpg" alt="Example 2" width="300"/>
-</p>
+![Example 1](images/example_thermal1.jpg)
+![Example 2](images/example_thermal2.jpg)
 
 ---
 
-## ⚠️ Model Limitations
+## ⚠️ Limitations
 
-- Very small objects may be difficult to detect
-- A GPU is required for high FPS
+* Very small objects may be difficult to detect
+* A GPU is recommended for high frame rates
+
+---
+
+## 📄 Citations
+
+```bibtex
+@article{tian2025yolov12,
+  title={YOLOv12: Attention-Centric Real-Time Object Detectors},
+  author={Tian, Yunjie and Ye, Qixiang and Doermann, David},
+  journal={arXiv preprint arXiv:2502.12524},
+  year={2025}
+}
+
+@software{yolov12,
+  author = {Tian, Yunjie and Ye, Qixiang and Doermann, David},
+  title = {YOLOv12: Attention-Centric Real-Time Object Detectors},
+  year = {2025},
+  url = {https://github.com/sunsmarterjie/yolov12},
+  license = {AGPL-3.0}
+}
+```
 
 ---
 
 ## 🤝 Contributing
 
-Pull requests and contributions are welcome!  
-If you use this model in a real project, let me know: I’m always happy to see real-world applications.
+Contributions and pull requests are welcome! If you use this model in real applications, feel free to reach out — it's always exciting to see real-world implementations.
 
----
 
 ## 📄 License
 
